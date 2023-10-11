@@ -1,4 +1,4 @@
-module github.com/trstringer/manual-approval
+module github.com/SahanaGowdaBV/Manual_approval_action_test
 
 go 1.17
 
