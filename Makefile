@@ -1,4 +1,4 @@
-IMAGE_REPO=ghcr.io/trstringer/manual-approval
+IMAGE_REPO=ghcr.io/SahanaGowdaBV/Manual_approval_action_test
 
 .PHONY: build
 build:
