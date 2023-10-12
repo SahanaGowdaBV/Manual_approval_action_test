@@ -1,34 +1,79 @@
 name: Manual Approval Workflow
 
 on:
-  issue_comment:
-    types:
-      - created
+  push:
+    branches:
+      - main
 
 jobs:
-  manual_approval:
+  create_issue:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Check for Manual Approval
+      - name: Create Issue for Manual Approval
         uses: actions/github-script@v5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            if (context.payload.comment && context.payload.comment.body) {
-              const comment = context.payload.comment.body;
-              const approvers = ['user1', 'user2', 'org/team1'];
-              
-              if (approvers.includes(context.payload.comment.user.login) && comment.toLowerCase().includes('approve')) {
-                // The comment is an approval from an allowed user
-                core.setOutput('approval', 'true');
-              }
-            }
-        id: approval
+            const createIssueResponse = await github.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Manual Approval for Deployment',
+              body: 'Please reply with "approve" to approve the deployment.',
+            });
+            core.setOutput('issue_number', createIssueResponse.data.number);
+            core.setOutput('approvals_required', 1);  # Adjust the number of required approvals as needed
 
-      - name: Deploy if Approved
-        if: steps.manual_approval.outputs.approval == 'true'
+  wait_for_approvals:
+    needs: create_issue
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Approvals
+        uses: actions/github-script@v5
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issueNumber = core.getInput('issue_number');
+            const approvalsRequired = core.getInput('approvals_required');
+            const delay = 60000; // 60 seconds
+
+            while (true) {
+              const issueComments = await github.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+              });
+
+              const approvals = issueComments.data.filter(comment => {
+                return comment.body.toLowerCase().includes('approve');
+              });
+
+              if (approvals.length >= approvalsRequired) {
+                core.setOutput('approvals', approvals.length);
+                break;
+              }
+
+              await new Promise(resolve => setTimeout(resolve, delay));
+            }
+
+      - name: Check Approvals
         run: |
-          # Your deployment commands here
+          const approvals = steps.wait_for_approvals.outputs.approvals;
+          if (approvals >= approvalsRequired) {
+            echo "The required number of approvals (${approvalsRequired}) has been received. Proceeding with the workflow."
+          } else {
+            echo "Waiting for ${approvalsRequired - approvals} more approval(s)."
+            exit 1
+          }
+
+  deploy:
+    needs: wait_for_approvals
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy if Approved
+        if: steps.wait_for_approvals.outputs.approvals >= steps.create_issue.outputs.approvals_required
+        run: |
+          echo "testing to deploy"
+
+
 
 
