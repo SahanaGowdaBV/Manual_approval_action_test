@@ -16,9 +16,7 @@ jobs:
       - name: Create Pull Request
         run: |
           echo "Creating a pull request"
-          # Replace with commands to create a pull request from your changes
-          # For example, you can use the GitHub CLI or API to create the pull request.
-          # Ensure that the pull request title and description indicate the need for approval.
+          gh pr create --title Manual_approval --body-file testing -H ${{ inputs.pr-branch }} -R Manual_approval_action_test
         shell: bash
 
   wait_for_approvals:
