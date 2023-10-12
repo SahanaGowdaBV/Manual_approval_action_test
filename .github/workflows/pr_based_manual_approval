@@ -1,0 +1,58 @@
+name: Manual Approval Workflow
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  create_pull_request:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Pull Request
+        id: create_pr
+        uses: actions/checkout@v2
+
+      - name: Create Pull Request
+        run: |
+          echo "Creating a pull request"
+          # Replace with commands to create a pull request from your changes
+          # For example, you can use the GitHub CLI or API to create the pull request.
+          # Ensure that the pull request title and description indicate the need for approval.
+        shell: bash
+
+  wait_for_approvals:
+    needs: create_pull_request
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Approvals
+        id: approvals
+        run: |
+          echo "Waiting for approvals"
+          PR_URL=$(cat $GITHUB_EVENT_PATH | jq -r .pull_request.url)
+          echo "PR URL: $PR_URL"
+
+          # Replace with commands to wait for approvals
+          # You can use the GitHub API to check the approval status of the pull request.
+          # For example, you can use `curl` to make API requests.
+
+          # Example using GitHub API v3
+          APPROVALS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            $PR_URL/reviews \
+            | jq '.[] | select(.state == "APPROVED")')
+
+          echo "Approvals: $APPROVALS"
+          echo "::set-output name=approvals::$(echo "$APPROVALS" | jq 'length')"
+
+        shell: bash
+
+  deploy:
+    needs: wait_for_approvals
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy if Approved
+        if: steps.wait_for_approvals.outputs.approvals > 0
+        run: |
+          echo "Deploying because approvals were received"
+          # Replace with your deployment steps
