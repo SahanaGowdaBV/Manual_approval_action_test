@@ -16,7 +16,7 @@ jobs:
       - name: Create Pull Request
         run: |
           echo "Creating a pull request"
-          gh pr create --title Manual_approval --body-file testing -H ${{ inputs.pr-branch }} -R Manual_approval_action_test
+          gh pr create --title Manual_approval --body-file testing -H ${{ inputs.pr-branch }} 
         shell: bash
 
   wait_for_approvals:
