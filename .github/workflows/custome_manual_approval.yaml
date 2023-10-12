@@ -1,7 +1,6 @@
 name: Manual Approval Workflow
 
 on:
-  push:
   issue_comment:
     types:
       - created
@@ -16,17 +15,20 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const comment = context.payload.comment.body;
-            const approvers = ['user1', 'user2', 'org/team1'];
-
-            if (approvers.includes(context.payload.comment.user.login) && comment.toLowerCase().includes('approve')) {
-              // The comment is an approval from an allowed user
-              core.setOutput('approval', 'true');
+            if (context.payload.comment && context.payload.comment.body) {
+              const comment = context.payload.comment.body;
+              const approvers = ['user1', 'user2', 'org/team1'];
+              
+              if (approvers.includes(context.payload.comment.user.login) && comment.toLowerCase().includes('approve')) {
+                // The comment is an approval from an allowed user
+                core.setOutput('approval', 'true');
+              }
             }
         id: approval
 
       - name: Deploy if Approved
         if: steps.manual_approval.outputs.approval == 'true'
         run: |
-          echo "testing"
+          # Your deployment commands here
+
 
