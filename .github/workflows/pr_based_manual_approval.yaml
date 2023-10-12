@@ -35,7 +35,7 @@ jobs:
           # For example, you can use `curl` to make API requests.
 
           # Example using GitHub API v3
-          APPROVALS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          APPROVALS=$(curl -s -H "Authorization: token ${{ secrets.MANUAL_APPROVAL }}" \
             -H "Accept: application/vnd.github.v3+json" \
             $PR_URL/reviews \
             | jq '.[] | select(.state == "APPROVED")')
